@@ -1,0 +1,6 @@
+swaram-venv
+__pycache__
+.mypy_cache
+img_backup
+img_data
+*.zip
