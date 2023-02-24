@@ -31,7 +31,7 @@ def main():
                 pass
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         image = cv2.flip(image, 1)
-        image = cv2.putText(image, cname[0], (150, 250),
+        image = cv2.putText(image, cname[0].title(), (150, 250),
                             cv2.FONT_HERSHEY_TRIPLEX, 3, (0, 255, 0), 4, cv2.LINE_AA)
         cv2.imshow(f"Swaram ", image)
         if cv2.waitKey(1) == ord("q"):

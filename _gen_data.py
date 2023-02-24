@@ -4,9 +4,10 @@ import string
 import numpy as np
 import pandas as pd
 import mediapipe as mp
+from typing import List
 
 
-def gen_classdata(cname, c_path, img_num):
+def gen_classdata(cname: str, c_path: str, img_num: int) -> List[list[float]]:
     class_df = []
     for i in range(0, img_num):
         img_path = f"{c_path}\\{i}.png"
@@ -28,15 +29,22 @@ def gen_classdata(cname, c_path, img_num):
     return class_df
 
 
+def get_all_dirs(data_path: str) -> List[str]:
+    if os.path.exists(data_path):
+        return list(filter(lambda fname: os.path.isdir(os.path.join(fname, data_path)), os.listdir(data_path)))
+    else:
+        return []
+
+
 def gen_dataset(img_num):
     print("Generating Dataset  ")
     data_path = os.path.join(os.path.dirname(
         os.path.realpath(__file__)), "img_data")
     res_df = []
     try:
-        for char in string.ascii_uppercase:
-            res_df += gen_classdata(char,
-                                    os.path.join(data_path, char), img_num)
+        for cname in get_all_dirs(data_path):
+            res_df += gen_classdata(cname,
+                                    os.path.join(data_path, cname), img_num)
     except Exception as err:
         print("Class img Err :", err)
     df = pd.DataFrame(data=res_df)
