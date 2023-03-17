@@ -3,37 +3,60 @@ import pickle
 import numpy as np
 import pandas as pd
 import mediapipe as mp
+from preprocess import proc_landmarks
 
-mp_hands = mp.solutions.hands
+mp_holistic = mp.solutions.holistic
+mp_drawing = mp.solutions.drawing_utils
+mp_drawing_styles = mp.solutions.drawing_styles
 
 
 def main():
     cap = cv2.VideoCapture(0)
-    with open("mlp_model.pkl", "rb") as mod_file:
-        model = pickle.load(mod_file)
-    cname = [""]
     while cap.isOpened():
         success, image = cap.read()
         if not success:
             print("Ignoring empty camera frame.")
             continue
-        image = cv2.flip(cv2.cvtColor(image, cv2.COLOR_BGR2RGB), 1)
-        with mp.solutions.hands.Hands(
-            static_image_mode=True, max_num_hands=1, min_detection_confidence=0.8
-        ) as hands:
+        image.flags.writeable = False
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        with mp_holistic.Holistic(
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5,
+            model_complexity=2
+        ) as holistic:
             try:
-                res = hands.process(image).multi_hand_landmarks[0].landmark
-                res = pd.DataFrame(data=[np.array(
-                    list(map(lambda l: [l.x, l.y, l.z], res))).flatten().tolist()])
-                cname = model.predict(res)
-
+                res = holistic.process(image)
+                image.flags.writeable = True
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+                mp_drawing.draw_landmarks(
+                    image,
+                    res.face_landmarks,
+                    mp_holistic.FACEMESH_CONTOURS,
+                    landmark_drawing_spec=None,
+                    connection_drawing_spec=mp_drawing_styles
+                    .get_default_face_mesh_contours_style())
+                mp_drawing.draw_landmarks(
+                    image,
+                    res.pose_landmarks,
+                    mp_holistic.POSE_CONNECTIONS,
+                    landmark_drawing_spec=mp_drawing_styles
+                    .get_default_pose_landmarks_style())
+                mp_drawing.draw_landmarks(
+                    image,
+                    res.right_hand_landmarks,
+                    mp_holistic.HAND_CONNECTIONS,
+                    landmark_drawing_spec=mp_drawing_styles
+                    .get_default_hand_landmarks_style())
+                mp_drawing.draw_landmarks(
+                    image,
+                    res.left_hand_landmarks,
+                    mp_holistic.HAND_CONNECTIONS,
+                    landmark_drawing_spec=mp_drawing_styles
+                    .get_default_hand_landmarks_style())
+                proc_landmarks(res)
             except Exception as err:
-                pass
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        image = cv2.flip(image, 1)
-        image = cv2.putText(image, cname[0].title(), (150, 250),
-                            cv2.FONT_HERSHEY_TRIPLEX, 3, (0, 255, 0), 4, cv2.LINE_AA)
-        cv2.imshow(f"Swaram ", image)
+                print("Error : ", err)
+            cv2.imshow(f"Swaram ", cv2.flip(image, 1))
         if cv2.waitKey(1) == ord("q"):
             break
 

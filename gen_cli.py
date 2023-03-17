@@ -3,7 +3,7 @@ import argparse
 import os
 import string
 import time
-from _gen_data import gen_dataset
+from gen_data import gen_dataset
 
 
 def gen_dir(cname):
