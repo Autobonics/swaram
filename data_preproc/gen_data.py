@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import mediapipe as mp
 from typing import List, NamedTuple
+from data_preproc.utils import draw_landmarks
 
 Landmark = NamedTuple("Landmark", [('x', float), (
     'y', float), (
@@ -52,7 +53,7 @@ def proc_landmarks(result_lmks: Landmarks) -> np.ndarray:
             # all landmarks except pose landmark are passed to mapLmk to generate vector
             # pose landmark was not passed bcos z_val of pose_landmark is discarded
             # the result from map contains 3 numpy vectors  of shape [(1404,),(63,),(63,)]
-            # pose landmarks are passed to poseMap function
+            # pose landmarks are passed to map_pose function
             # The pose landmark vector is generated with shape (66,)
             # Each landmark is passed with shape bcos zero vector is generated  for each shape in the absence of landmark
 
@@ -116,3 +117,52 @@ def proc_landmarks(result_lmks: Landmarks) -> np.ndarray:
     #     df = pd.DataFrame(data=res_df)
     #     print("Finished generating data \nWriting to file final_data.csv")
     #     df.to_csv('dataset.csv', index=False, header=False)
+
+
+class GlossProcess():
+    def __init__(self, glosses: List[str], frame_count: int, vid_count: int):
+        self.glosses = glosses
+        self.frame_count = frame_count
+        self.vid_count = vid_count
+
+    def __iter__(self):
+        for gloss in self.glosses:
+            yield self.gen_seq(gloss)
+
+    def __repr__(self):
+        return f"""Glosses     : {self.glosses}\n 
+                   frame count : {self.frame_count}\n 
+                   video count : {self.vid_count}"""
+
+    def gen_seq(self, gloss: str) -> List[np.ndarray]:
+        cap = cv2.VideoCapture(0)
+        result: List[np.ndarray] = []
+        i = 0
+        while cap.isOpened():
+            success, image = cap.read()
+            if not success:
+                print("Ignoring empty camera frame.")
+                continue
+            image.flags.writeable = False
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            mp_holistic = mp.solutions.holistic
+            with mp_holistic.Holistic(
+                min_detection_confidence=0.5,
+                min_tracking_confidence=0.5,
+            ) as holistic:
+                try:
+                    res = holistic.process(image)
+                    image.flags.writeable = True
+                    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+                    draw_landmarks(image, res)
+                    result.append(proc_landmarks(res))
+                    image = cv2.putText(cv2.flip(image, 1), f"frame : {i+1} of [{gloss}]", (10, 35),
+                                        cv2.FONT_HERSHEY_TRIPLEX, 0.8, (0, 255, 0), 1, cv2.LINE_AA)
+                except Exception as err:
+                    print("Error : ", err)
+                cv2.imshow(f"Swaram Data Collection", image)
+            if cv2.waitKey(1) == ord("q") or i >= self.frame_count:
+                break
+        cap.release()
+        cv2.destroyAllWindows()
+        return result
