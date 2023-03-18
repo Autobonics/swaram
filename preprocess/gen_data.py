@@ -44,23 +44,23 @@ def proc_landmarks(result_lmks: Landmarks) -> np.ndarray:
             #
             #   output => [0.54,0.53,0.57,0.48,0.54,0.61,0.22,0.39,0.77]
             #
-            return (np.fromiter(
-                map(lambda l: [l.x, l.y, l.z], landmarks.landmark), float).flatten())
-        except Exception as err:
-            print("MapLmk Error : ", err)
+            return np.array(
+                list(map(lambda l: [l.x, l.y, l.z], landmarks.landmark))).flatten()
+        except Exception:
+            # print("MapLmk Error : ", err)
             return np.zeros(shape)
             # all landmarks except pose landmark are passed to mapLmk to generate vector
             # pose landmark was not passed bcos z_val of pose_landmark is discarded
             # the result from map contains 3 numpy vectors  of shape [(1404,),(63,),(63,)]
             # pose landmarks are passed to poseMap function
             # The pose landmark vector is generated with shape (66,)
-            # Each landmark is passed seperately bcos zero vector is generated in the absence of landmark
+            # Each landmark is passed with shape bcos zero vector is generated  for each shape in the absence of landmark
 
     def map_pose(pose_lmks: landmark, shape: int) -> np.ndarray:
         try:
-            return (np.fromiter(map(lambda l: [l.x, l.y], pose_lmks.landmark), float).flatten())
-        except Exception as err:
-            print("MapPose err : ", err)
+            return np.array(list(map(lambda l: [l.x, l.y], pose_lmks.landmark))).flatten()
+        except Exception:
+            # print("MapPose err : ", err)
             return np.zeros(shape)
 
     try:
@@ -70,9 +70,9 @@ def proc_landmarks(result_lmks: Landmarks) -> np.ndarray:
             map_lmk(lf_hand_lmks, 63),
             map_pose(pose_lmks, 66),
         ])
-    except Exception as err:
+    except Exception:
         res = np.zeros(1596)
-        print("Res error : ", err)
+        # print("Res error : ", err)
     return res
 
     # def gen_classdata(cname: str, c_path: str, img_num: int) -> List[list[float]]:
