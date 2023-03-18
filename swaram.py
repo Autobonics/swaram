@@ -22,7 +22,6 @@ def main():
         with mp_holistic.Holistic(
             min_detection_confidence=0.5,
             min_tracking_confidence=0.5,
-            model_complexity=2
         ) as holistic:
             try:
                 res = holistic.process(image)
@@ -53,7 +52,9 @@ def main():
                     mp_holistic.HAND_CONNECTIONS,
                     landmark_drawing_spec=mp_drawing_styles
                     .get_default_hand_landmarks_style())
-                proc_landmarks(res)
+                res_vec = proc_landmarks(res)
+                print("Res : ", res_vec)
+                print("Res Shape: ", res_vec.shape)
             except Exception as err:
                 print("Error : ", err)
             cv2.imshow(f"Swaram ", cv2.flip(image, 1))

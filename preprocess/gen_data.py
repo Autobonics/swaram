@@ -25,37 +25,54 @@ def proc_landmarks(result_lmks: Landmarks) -> np.ndarray:
     # hand_landmarks -> 21 x 2 [left,right] x 3[x,y,z] ->126
     # pose_landmarks -> 33 x 2[x,y, z discarded] -> 66
     # total  landmarks [face+hands+pose] -> 543 x (x,y,z in all landmarks except pose) ->1596
-    rt_hand_lmks = result_lmks.right_hand_landmarks.landmark
-    lf_hand_lmks = result_lmks.left_hand_landmarks.landmark
-    face_lmks = result_lmks.face_landmarks.landmark
-    pose_lmks = result_lmks.pose_landmarks.landmark
 
-    def mapLmk(landmarks): return (np.fromiter(
-        # Convert each landmark from [x:x_val,y:y_val,z:z_val] to [x_val,y_val,z_val] list and convert to array
-        # and flatten the result getting a numpy vector
-        #
-        # eg : input => [
-        #         { x:0.54, y:0.53, z.0.57},
-        #         { x:0.48, y:0.54, z.0.61},
-        #         { x:0.22, y:0.39, z.0.77}
-        #        ]
-        #
-        #   output => [0.54,0.53,0.57,0.48,0.54,0.61,0.22,0.39,0.77]
-        #
-        map(lambda l: [l.x, l.y, l.z], landmarks), dtype=float).flatten())
-    # all landmarks except pose landmark are passed to mapLmk to generate vector
-    # pose landmark was not passed bcos z_val of pose_landmark is discarded
-    # the result from map contains 3 numpy vectors  of shape [(1404,),(63,),(63,)]
-    # the 3 vectors are concatinated to form one large result vector of shape (1530,)
-    res = np.concatenate(np.fromiter(
-        map(mapLmk, [rt_hand_lmks, lf_hand_lmks,
-                     face_lmks]), dtype=float))
+    face_lmks = result_lmks.face_landmarks if result_lmks.face_landmarks else None
+    rt_hand_lmks = result_lmks.right_hand_landmarks if result_lmks.right_hand_landmarks else None
+    lf_hand_lmks = result_lmks.left_hand_landmarks if result_lmks.left_hand_landmarks else None
+    pose_lmks = result_lmks.pose_landmarks if result_lmks.pose_landmarks else None
 
-    # The pose landmark vector is generated with shape (66,)
-    pose_res = np.array(np.fromiter(map(lambda l: [l.x, l.y],
-                                        pose_lmks), dtype=float)).flatten()
-    # pose vector is concatinated with the result vector from prior concatination
-    res = np.concatenate([res, pose_res])
+    def map_lmk(landmarks: landmark, shape: int) -> np.ndarray:
+        try:
+            # Convert each landmark from [x:x_val,y:y_val,z:z_val] to [x_val,y_val,z_val] list and convert to array
+            # and flatten the result getting a numpy vector
+            #
+            # eg : input => [
+            #         { x:0.54, y:0.53, z.0.57},
+            #         { x:0.48, y:0.54, z.0.61},
+            #         { x:0.22, y:0.39, z.0.77}
+            #        ]
+            #
+            #   output => [0.54,0.53,0.57,0.48,0.54,0.61,0.22,0.39,0.77]
+            #
+            return (np.fromiter(
+                map(lambda l: [l.x, l.y, l.z], landmarks.landmark), float).flatten())
+        except Exception as err:
+            print("MapLmk Error : ", err)
+            return np.zeros(shape)
+            # all landmarks except pose landmark are passed to mapLmk to generate vector
+            # pose landmark was not passed bcos z_val of pose_landmark is discarded
+            # the result from map contains 3 numpy vectors  of shape [(1404,),(63,),(63,)]
+            # pose landmarks are passed to poseMap function
+            # The pose landmark vector is generated with shape (66,)
+            # Each landmark is passed seperately bcos zero vector is generated in the absence of landmark
+
+    def map_pose(pose_lmks: landmark, shape: int) -> np.ndarray:
+        try:
+            return (np.fromiter(map(lambda l: [l.x, l.y], pose_lmks.landmark), float).flatten())
+        except Exception as err:
+            print("MapPose err : ", err)
+            return np.zeros(shape)
+
+    try:
+        res = np.concatenate([
+            map_lmk(face_lmks, 1404),
+            map_lmk(rt_hand_lmks, 63),
+            map_lmk(lf_hand_lmks, 63),
+            map_pose(pose_lmks, 66),
+        ])
+    except Exception as err:
+        res = np.zeros(1596)
+        print("Res error : ", err)
     return res
 
     # def gen_classdata(cname: str, c_path: str, img_num: int) -> List[list[float]]:
