@@ -8,7 +8,7 @@ from gen_data import gen_dataset
 
 def gen_dir(cname):
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    dataset_path = os.path.join(dir_path, "img_data")
+    dataset_path = os.path.join(dir_path, "phrase_data")
     if not os.path.isdir(dataset_path):
         os.mkdir(dataset_path)
     path = os.path.join(dataset_path, cname)

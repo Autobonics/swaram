@@ -1,5 +1,7 @@
 import mediapipe as mp
 import numpy as np
+import os
+from typing import List
 
 mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils
@@ -32,3 +34,25 @@ def draw_landmarks(image: np.ndarray, res):
         mp_holistic.HAND_CONNECTIONS,
         landmark_drawing_spec=mp_drawing_styles
         .get_default_hand_landmarks_style())
+
+
+def set_gloss_path(gloss: str, gloss_dir: str) -> str:
+    data_path = os.path.join(os.path.dirname(
+        os.path.realpath(__file__)), gloss_dir)
+    req_dir = os.path.join(data_path, gloss)
+    if not os.path.exists(req_dir):
+        os.mkdir(req_dir)
+    return req_dir
+
+
+def get_all_gloss(gloss_dir: str) -> List[str]:
+    if os.path.exists(gloss_dir):
+        return list(filter(lambda fname: os.path.isdir(os.path.join(fname, gloss_dir)), os.listdir(gloss_dir)))
+    else:
+        return []
+
+
+def gdata_count(gloss: str, gloss_dir: str) -> int:
+    req_dir = set_gloss_path(gloss, gloss_dir)
+    return len(list(filter(lambda fname: os.path.isfile(
+        os.path.join(fname, req_dir)), os.listdir(req_dir))))

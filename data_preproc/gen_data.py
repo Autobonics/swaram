@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import mediapipe as mp
 from typing import List, NamedTuple
-from data_preproc.utils import draw_landmarks
+from data_preproc.utils import draw_landmarks, set_gloss_path, gdata_count
 
 Landmark = NamedTuple("Landmark", [('x', float), (
     'y', float), (
@@ -76,58 +76,29 @@ def proc_landmarks(result_lmks: Landmarks) -> np.ndarray:
         # print("Res error : ", err)
     return res
 
-    # def gen_classdata(cname: str, c_path: str, img_num: int) -> List[list[float]]:
-    #     class_df = []
-    #     for i in range(0, img_num):
-    #         img_path = f"{c_path}\\{i}.png"
-    #         if os.path.exists(img_path):
-    #             img = cv2.imread(img_path)
-    #             img = cv2.flip(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), 1)
-    #             with mp.solutions.hands.Hands(
-    #                     static_image_mode=True, max_num_hands=1, min_detection_confidence=0.8
-    #             ) as hands:
-    #                 try:
-    #                     res = hands.process(img).multi_hand_landmarks[0].landmark
-    #                     res = np.array(
-    #                         list(map(lambda l: [l.x, l.y, l.z], res))).flatten().tolist()
-    #                     res.append(cname)
-    #                     class_df.append(res)
-    #                 except Exception as err:
-    #                     print(f"Unable to generate data for image [{cname},{i}] ")
-
-    #     return class_df
-
-    # def get_all_dirs(data_path: str) -> List[str]:
-    #     if os.path.exists(data_path):
-    #         return list(filter(lambda fname: os.path.isdir(os.path.join(fname, data_path)), os.listdir(data_path)))
-    #     else:
-    #         return []
-
-    # def gen_dataset(img_num):
-    #     print("Generating Dataset  ")
-    #     data_path = os.path.join(os.path.dirname(
-    #         os.path.realpath(__file__)), "img_data")
-    #     res_df = []
-    #     try:
-    #         for cname in get_all_dirs(data_path):
-    #             res_df += gen_classdata(cname,
-    #                                     os.path.join(data_path, cname), img_num)
-    #     except Exception as err:
-    #         print("Class img Err :", err)
-    #     df = pd.DataFrame(data=res_df)
-    #     print("Finished generating data \nWriting to file final_data.csv")
-    #     df.to_csv('dataset.csv', index=False, header=False)
-
 
 class GlossProcess():
-    def __init__(self, glosses: List[str], frame_count: int, vid_count: int):
+    def __init__(self, glosses: List[str],
+                 frame_count: int = 72,
+                 vid_count: int = 10,
+                 gloss_dir: str = "gloss_data",
+                 append: bool = False,
+                 skip: bool = False):
         self.glosses = glosses
+        # frame count default value : 72 @ 24fps ie 3 sec vid length
         self.frame_count = frame_count
+        # total video count for each gloss  :  10
         self.vid_count = vid_count
+        # directory to store gloss_data
+        self.gloss_dir = gloss_dir
+        # Flag that specifies if data is to be appended with pre existing data
+        self.append = append
+        # Flag that specifies to skip generation of data if data pre-exists for the gloss
+        self.skip = skip
 
     def __iter__(self):
         for gloss in self.glosses:
-            yield self.gen_seq(gloss)
+            yield self.gen_gloss_data(gloss, append=append, skip=skip)
 
     def __repr__(self):
         return f"""Glosses     : {self.glosses}\n 
@@ -135,6 +106,8 @@ class GlossProcess():
                    video count : {self.vid_count}"""
 
     def gen_seq(self, gloss: str) -> List[np.ndarray]:
+        # if not self.frame_count:
+        #     raise AttributeError("Frame count not set ")
         cap = cv2.VideoCapture(0)
         result: List[np.ndarray] = []
         i = 0
@@ -158,6 +131,7 @@ class GlossProcess():
                     result.append(proc_landmarks(res))
                     image = cv2.putText(cv2.flip(image, 1), f"frame : {i+1} of [{gloss}]", (10, 35),
                                         cv2.FONT_HERSHEY_TRIPLEX, 0.8, (0, 255, 0), 1, cv2.LINE_AA)
+                    i += 1
                 except Exception as err:
                     print("Error : ", err)
                 cv2.imshow(f"Swaram Data Collection", image)
@@ -166,3 +140,21 @@ class GlossProcess():
         cap.release()
         cv2.destroyAllWindows()
         return result
+
+    def gen_gloss_data(self, gloss: str, append=False, skip=False) -> str:
+        # if not self.vid_count:
+        #     raise AttributeError("Video Count not defined")
+
+        # Skips generating the data if data already exists for the gloss
+        if skip and gdata_count(gloss, self.gloss_dir) > 0:
+            return set_gloss_path(gloss, self.gloss_dir)
+
+        # Appends the data count for each video if there exists previous data
+        data_cnt = gdata_count(gloss, self.gloss_dir) if append else 1
+        path = set_gloss_path(gloss, self.gloss_dir)
+        for i in range(self.vid_count):
+            res = self.gen_seq(gloss)
+            df = pd.DataFrame(data=res)
+            res_file = "{}/{}.csv".format(path, data_cnt+i)
+            df.to_csv(res_file, index=False, header=False)
+        return path
