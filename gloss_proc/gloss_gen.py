@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import mediapipe as mp
 from typing import List, NamedTuple
-from data_preproc.utils import draw_landmarks, set_gloss_path, gdata_count
+from gloss_proc.utils import draw_landmarks, set_gloss_path, gdata_count, gdata_dir
 
 Landmark = NamedTuple("Landmark", [('x', float), (
     'y', float), (
@@ -84,21 +84,35 @@ class GlossProcess():
                  gloss_dir: str = "gloss_data",
                  append: bool = False,
                  skip: bool = False):
-        self.glosses = glosses
+        # Gloss sanitization , minimum 1 gloss required
+        if len(glosses) > 0 and len(glosses[0]) > 0:
+            raise AttributeError("Invalid glosses")
+        self.glosses = self._sanitize(glosses)
         # frame count default value : 72 @ 24fps ie 3 sec vid length
         self.frame_count = frame_count
         # total video count for each gloss  :  10
         self.vid_count = vid_count
         # directory to store gloss_data
         self.gloss_dir = gloss_dir
+        # Generate gloss dir if it doesnot exist
+        gdata_dir(gloss_dir)
         # Flag that specifies if data is to be appended with pre existing data
         self.append = append
         # Flag that specifies to skip generation of data if data pre-exists for the gloss
         self.skip = skip
 
+    def _sanitize(self, glosses: List[str]) -> List[str]:
+        return [gloss.upper().replace(" ", "_") for gloss in glosses]
+
+    def add_gloss(self, glosses: List[str]):
+        self.glosses = list(set(self.glosses+self._sanitize(glosses)))
+
     def __iter__(self):
         for gloss in self.glosses:
-            yield self.gen_gloss_data(gloss, append=append, skip=skip)
+            try:
+                yield self.gen_gloss_data(gloss, append=append, skip=skip)
+            except Exception as err:
+                raise StopIteration(f'error Generating data {err}')
 
     def __repr__(self):
         return f"""Glosses     : {self.glosses}\n 
@@ -158,3 +172,6 @@ class GlossProcess():
             res_file = "{}/{}.csv".format(path, data_cnt+i)
             df.to_csv(res_file, index=False, header=False)
         return path
+
+    def generate(self) -> List[str]:
+        return [res for res in self]

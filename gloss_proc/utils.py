@@ -7,6 +7,8 @@ mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 
+# Drawing from mediapipe holistic docs : )
+
 
 def draw_landmarks(image: np.ndarray, res):
     mp_drawing.draw_landmarks(
@@ -56,3 +58,10 @@ def gdata_count(gloss: str, gloss_dir: str) -> int:
     req_dir = set_gloss_path(gloss, gloss_dir)
     return len(list(filter(lambda fname: os.path.isfile(
         os.path.join(fname, req_dir)), os.listdir(req_dir))))
+
+
+def gdata_dir(gloss_dir: str):
+    data_path = os.path.join(os.path.dirname(
+        os.path.realpath(__file__)), gloss_dir)
+    if not os.path.exists(data_path):
+        os.mkdir(data_path)
