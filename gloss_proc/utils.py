@@ -39,8 +39,7 @@ def draw_landmarks(image: np.ndarray, res):
 
 
 def set_gloss_path(gloss: str, gloss_dir: str) -> str:
-    data_path = os.path.join(os.path.dirname(
-        os.path.realpath(__file__)), gloss_dir)
+    data_path = os.path.join(os.getcwd(), gloss_dir)
     req_dir = os.path.join(data_path, gloss)
     if not os.path.exists(req_dir):
         os.mkdir(req_dir)
@@ -61,7 +60,7 @@ def gdata_count(gloss: str, gloss_dir: str) -> int:
 
 
 def gdata_dir(gloss_dir: str):
-    data_path = os.path.join(os.path.dirname(
-        os.path.realpath(__file__)), gloss_dir)
+    data_path = os.path.join(
+        os.getcwd(), gloss_dir)
     if not os.path.exists(data_path):
         os.mkdir(data_path)

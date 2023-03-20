@@ -4,7 +4,7 @@ import string
 import numpy as np
 import pandas as pd
 import mediapipe as mp
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Union
 from gloss_proc.utils import draw_landmarks, set_gloss_path, gdata_count, gdata_dir
 
 Landmark = NamedTuple("Landmark", [('x', float), (
@@ -79,13 +79,13 @@ def proc_landmarks(result_lmks: Landmarks) -> np.ndarray:
 
 class GlossProcess():
     def __init__(self, glosses: List[str],
-                 frame_count: int = 72,
+                 frame_count: int = 48,
                  vid_count: int = 10,
                  gloss_dir: str = "gloss_data",
                  append: bool = False,
                  skip: bool = False):
         # Gloss sanitization , minimum 1 gloss required
-        if len(glosses) > 0 and len(glosses[0]) > 0:
+        if len(glosses) == 0 and len(glosses[0]) == 0:
             raise AttributeError("Invalid glosses")
         self.glosses = self._sanitize(glosses)
         # frame count default value : 72 @ 24fps ie 3 sec vid length
@@ -102,7 +102,7 @@ class GlossProcess():
         self.skip = skip
 
     def _sanitize(self, glosses: List[str]) -> List[str]:
-        return [gloss.upper().replace(" ", "_") for gloss in glosses]
+        return [gloss.rstrip().upper().replace(" ", "_") for gloss in glosses]
 
     def add_gloss(self, glosses: List[str]):
         self.glosses = list(set(self.glosses+self._sanitize(glosses)))
@@ -110,16 +110,17 @@ class GlossProcess():
     def __iter__(self):
         for gloss in self.glosses:
             try:
-                yield self.gen_gloss_data(gloss, append=append, skip=skip)
+                yield self.gen_gloss_data(gloss, append=self.append, skip=self.skip)
             except Exception as err:
-                raise StopIteration(f'error Generating data {err}')
+                print("generator error : ", err)
+                raise StopIteration()
 
     def __repr__(self):
         return f"""Glosses     : {self.glosses}\n 
                    frame count : {self.frame_count}\n 
                    video count : {self.vid_count}"""
 
-    def gen_seq(self, gloss: str) -> List[np.ndarray]:
+    def gen_seq(self, gloss: str, vid_num: Union[None, int] = None) -> List[np.ndarray]:
         # if not self.frame_count:
         #     raise AttributeError("Frame count not set ")
         cap = cv2.VideoCapture(0)
@@ -143,7 +144,8 @@ class GlossProcess():
                     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
                     draw_landmarks(image, res)
                     result.append(proc_landmarks(res))
-                    image = cv2.putText(cv2.flip(image, 1), f"frame : {i+1} of [{gloss}]", (10, 35),
+                    desc = f"frame : {i+1} of [{gloss}]" if not vid_num else f"frame : {i+1} of [{gloss} : {vid_num}]"
+                    image = cv2.putText(cv2.flip(image, 1), desc, (10, 35),
                                         cv2.FONT_HERSHEY_TRIPLEX, 0.8, (0, 255, 0), 1, cv2.LINE_AA)
                     i += 1
                 except Exception as err:
@@ -167,7 +169,7 @@ class GlossProcess():
         data_cnt = gdata_count(gloss, self.gloss_dir) if append else 1
         path = set_gloss_path(gloss, self.gloss_dir)
         for i in range(self.vid_count):
-            res = self.gen_seq(gloss)
+            res = self.gen_seq(gloss, i+1)
             df = pd.DataFrame(data=res)
             res_file = "{}/{}.csv".format(path, data_cnt+i)
             df.to_csv(res_file, index=False, header=False)
