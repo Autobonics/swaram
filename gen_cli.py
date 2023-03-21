@@ -18,6 +18,12 @@ def main():
         "-r", "--require", help="Generate gloss from gloss.txt", action="store_true"
     )
     parser.add_argument(
+        "-c", "--count", help="Add number of gloss [count from 0 or index specified by -i flag ] ie  get glosses[i:n](where i=0 by defualt) from gloss.txt", type=int
+    )
+    parser.add_argument(
+        "-i", "--index", help="select i th gloss from gloss.txt", type=int
+    )
+    parser.add_argument(
         "-v", "--vid", help="Add number of videos for each class [default:10]", type=int
     )
     parser.add_argument(
@@ -42,7 +48,13 @@ def main():
         try:
             with open('gloss.txt', 'r') as file:
                 glosses = file.readlines()
-            gp = GlossProcess(glosses, vid_count=vid_count,
+            gloss_len = abs(
+                parser.parse_args().count) if parser.parse_args().count else len(glosses)
+            init_index = abs(
+                parser.parse_args().index) if parser.parse_args().index else 0
+            if init_index > gloss_len:
+                raise IndexError("Index Greater than total number of gloss")
+            gp = GlossProcess(glosses[init_index:gloss_len], vid_count=vid_count,
                               frame_count=frame_count)
             gp.generate()
         except Exception as err:
