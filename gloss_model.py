@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from torch.utils.tensorboard import SummaryWriter
 
 
 class GlossModel(nn.Module):
@@ -18,8 +19,8 @@ class GlossModel(nn.Module):
         self.fc2 = nn.Linear(32, class_no, device=self.device)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        out1 = self.relu(self.lstm1(x)[0])
-        out2 = self.relu(self.lstm2(out1)[0])
-        out3 = self.relu(self.fc1(out2))
-        out = self.softmax(self.fc2(out3))
+        lstm1_out = self.relu(self.lstm1(x)[0])
+        lstm2_out = self.relu(self.lstm2(lstm1_out)[0])
+        fc1_out = self.relu(self.fc1(lstm2_out))
+        out = self.softmax(self.fc2(fc1_out))
         return out
