@@ -8,7 +8,7 @@ from gloss_proc import GlossProcess
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Cli to Generate data and add to dataset")
+        description="Cli to Generate asl gloss data")
     parser.add_argument(
         "-g",
         "--gloss",
