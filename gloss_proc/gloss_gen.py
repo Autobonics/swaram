@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import mediapipe as mp
 from typing import List, NamedTuple, Union
-from gloss_proc.utils import draw_landmarks, set_gloss_path, gdata_count, gdata_dir, get_all_gloss
+from gloss_proc.utils import draw_landmarks, set_gloss_path, gdata_count, gdata_dir, get_all_gloss, _get_all_gdata, _get_gdata, GData, LabeledData
 
 Landmark = NamedTuple("Landmark", [('x', float), (
     'y', float), (
@@ -177,6 +177,12 @@ class GlossProcess():
 
     def get_labels(self) -> List[str]:
         return get_all_gloss(self.gloss_dir)
+
+    def get_gdata(self, gloss: str) -> GData:
+        return _get_gdata(self.gloss_dir, gloss)
+
+    def get_all_gdata(self, gloss: str) -> List[LabeledData]:
+        return _get_all_gdata(self.gloss_dir)
 
     def generate(self) -> List[str]:
         return [res for res in self]

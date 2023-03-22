@@ -3,13 +3,16 @@ import numpy as np
 import pandas as pd
 import os
 import torch
-from typing import List
+from typing import List, Tuple
 
 mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 
 # Drawing from mediapipe holistic docs : )
+
+GData = List[np.ndarray]
+LabeledData = Tuple[GData, str]
 
 
 def draw_landmarks(image: np.ndarray, res):
@@ -79,5 +82,9 @@ def get_vid_data(vid_dir: str) -> np.ndarray:
     return pd.read_csv(vid_dir).to_numpy()
 
 
-def gloss_data(gloss_dir: str, gloss: str) -> List[np.ndarray]:
+def _get_gdata(gloss_dir: str, gloss: str) -> GData:
     return List(map(lambda v: get_vid_data(v), get_all_vid(gloss_dir, gloss)))
+
+
+def _get_all_gdata(gloss_dir: str) -> List[LabeledData]:
+    return List(map(lambda g: (_get_gdata(gloss_dir, g), g), get_all_gloss(gloss_dir)))
