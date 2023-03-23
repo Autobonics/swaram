@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import torch
 from typing import List, Tuple
+from functools import reduce
 
 mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils
@@ -11,8 +12,7 @@ mp_drawing_styles = mp.solutions.drawing_styles
 
 # Drawing from mediapipe holistic docs : )
 
-GData = List[np.ndarray]
-LabeledData = Tuple[GData, str]
+GData = List[Tuple[np.ndarray, str]]
 
 
 def draw_landmarks(image: np.ndarray, res):
@@ -58,12 +58,6 @@ def get_all_gloss(gloss_dir: str) -> List[str]:
         return []
 
 
-def gdata_count(gloss: str, gloss_dir: str) -> int:
-    req_dir = set_gloss_path(gloss, gloss_dir)
-    return len(list(filter(lambda fname: os.path.isfile(
-        os.path.join(req_dir, fname)), os.listdir(req_dir))))
-
-
 def gdata_dir(gloss_dir: str) -> str:
     data_path = os.path.join(
         os.getcwd(), gloss_dir)
@@ -78,13 +72,19 @@ def get_all_vid(gloss_dir: str, gloss: str) -> List[str]:
         fname), map(lambda f: os.path.join(gpath, f), os.listdir(gpath))))
 
 
+def gdata_count(gloss_dir: str, gloss: str) -> int:
+    return len(get_all_vid(gloss_dir, gloss))
+
+
 def get_vid_data(vid_dir: str) -> np.ndarray:
-    return pd.read_csv(vid_dir).to_numpy()
+    return pd.read_csv(vid_dir, header=None).to_numpy()
 
 
 def _get_gdata(gloss_dir: str, gloss: str) -> GData:
-    return List(map(lambda v: get_vid_data(v), get_all_vid(gloss_dir, gloss)))
+    return list(map(lambda v: (get_vid_data(v), gloss), get_all_vid(gloss_dir, gloss)))
 
 
-def _get_all_gdata(gloss_dir: str) -> List[LabeledData]:
-    return List(map(lambda g: (_get_gdata(gloss_dir, g), g), get_all_gloss(gloss_dir)))
+def _get_all_gdata(gloss_dir: str):
+    gdata: List[GData] = [_get_gdata(gloss_dir, gloss)
+                          for gloss in get_all_gloss(gloss_dir)]
+    return gdata

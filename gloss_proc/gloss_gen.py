@@ -4,8 +4,9 @@ import string
 import numpy as np
 import pandas as pd
 import mediapipe as mp
+import gloss_proc.utils
 from typing import List, NamedTuple, Union
-from gloss_proc.utils import draw_landmarks, set_gloss_path, gdata_count, gdata_dir, get_all_gloss, _get_all_gdata, _get_gdata, GData, LabeledData
+from gloss_proc.utils import draw_landmarks, set_gloss_path, gdata_count, gdata_dir, get_all_gloss, _get_all_gdata, _get_gdata, GData
 
 Landmark = NamedTuple("Landmark", [('x', float), (
     'y', float), (
@@ -162,11 +163,11 @@ class GlossProcess():
         #     raise AttributeError("Video Count not defined")
 
         # Skips generating the data if data already exists for the gloss
-        if skip and gdata_count(gloss, self.gloss_dir) > 0:
+        if skip and gdata_count(self.gloss_dir, gloss) > 0:
             return set_gloss_path(gloss, self.gloss_dir)
 
         # Appends the data count for each video if there exists previous data
-        data_cnt = gdata_count(gloss, self.gloss_dir) if append else 1
+        data_cnt = gdata_count(self.gloss_dir, gloss) if append else 1
         path = set_gloss_path(gloss, self.gloss_dir)
         for i in range(self.vid_count):
             res = self.gen_seq(gloss, i+1)
@@ -181,8 +182,8 @@ class GlossProcess():
     def get_gdata(self, gloss: str) -> GData:
         return _get_gdata(self.gloss_dir, gloss)
 
-    def get_all_gdata(self, gloss: str) -> List[LabeledData]:
-        return _get_all_gdata(self.gloss_dir)
+    # def get_all_gdata(self, gloss: str) -> Gdata:
+    #     return _get_all_gdata(self.gloss_dir)
 
     def generate(self) -> List[str]:
         return [res for res in self]
