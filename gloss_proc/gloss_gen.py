@@ -94,7 +94,8 @@ class GlossProcess():
             return GlossProcess(**j)
         except Exception as err:
             print("Error loading checkpoint : ", err)
-            return GlossProcess.default()
+            exit()
+            # return GlossProcess.default()
 
     def __init__(self,
                  glosses: List[str] = [],
