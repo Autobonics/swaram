@@ -4,6 +4,7 @@ import string
 import numpy as np
 import pandas as pd
 import mediapipe as mp
+import json
 import gloss_proc.utils
 from typing import List, NamedTuple, Union
 from gloss_proc.utils import draw_landmarks, set_gloss_path, gdata_count, gdata_dir, get_all_gloss, _get_all_gdata, _get_gdata, GData
@@ -79,12 +80,30 @@ def proc_landmarks(result_lmks: Landmarks) -> np.ndarray:
 
 
 class GlossProcess():
-    def __init__(self, glosses: List[str],
+
+    @staticmethod
+    def default() -> "GlossProcess":
+        return GlossProcess(get_all_gloss("gloss_data"))
+
+    @staticmethod
+    def load_checkpoint() -> "GlossProcess":
+        try:
+            with open('gproc_checkpnt.json', 'r') as file:
+                chkpt = file.read()
+            j = json.loads(chkpt)
+            return GlossProcess(**j)
+        except Exception as err:
+            print("Error loading checkpoint : ", err)
+            return GlossProcess.default()
+
+    def __init__(self,
+                 glosses: List[str] = [],
                  frame_count: int = 48,
                  vid_count: int = 10,
                  gloss_dir: str = "gloss_data",
                  append: bool = False,
                  skip: bool = False):
+
         # Gloss sanitization , minimum 1 gloss required
         if len(glosses) == 0 and len(glosses[0]) == 0:
             raise AttributeError("Invalid glosses")
@@ -182,8 +201,13 @@ class GlossProcess():
     def get_gdata(self, gloss: str) -> GData:
         return _get_gdata(self.gloss_dir, gloss)
 
-    # def get_all_gdata(self, gloss: str) -> Gdata:
-    #     return _get_all_gdata(self.gloss_dir)
+    def get_all_gdata(self) -> List[GData]:
+        return _get_all_gdata(self.gloss_dir)
 
     def generate(self) -> List[str]:
         return [res for res in self]
+
+    def save_checkpoint(self):
+        ckpt = json.dumps(self.__dict__)
+        with open('gproc_checkpnt.json', 'w') as file:
+            file.write(ckpt)

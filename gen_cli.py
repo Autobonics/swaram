@@ -18,7 +18,7 @@ def main():
         "-r", "--require", help="Generate gloss from gloss.txt", action="store_true"
     )
     parser.add_argument(
-        "-c", "--count", help="Add number of gloss [count from 0 or index specified by -i flag ] ie  get glosses[i:n](where i=0 by defualt) from gloss.txt", type=int
+        "-c", "--count", help="Add number of gloss [count from 0 or index specified by -i flag ] ie  get glosses[i:n](where i=0 by default) from gloss.txt", type=int
     )
     parser.add_argument(
         "-i", "--index", help="select i th gloss from gloss.txt", type=int
@@ -42,6 +42,7 @@ def main():
             gp = GlossProcess([gloss], vid_count=vid_count,
                               frame_count=frame_count)
             res = gp.generate()
+            gp.save_checkpoint()
         except Exception as err:
             print(err)
     else:
@@ -57,6 +58,7 @@ def main():
             gp = GlossProcess(glosses[init_index:gloss_len], vid_count=vid_count,
                               frame_count=frame_count)
             gp.generate()
+            gp.save_checkpoint()
         except Exception as err:
             print(err)
 

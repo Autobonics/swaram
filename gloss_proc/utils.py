@@ -84,7 +84,6 @@ def _get_gdata(gloss_dir: str, gloss: str) -> GData:
     return list(map(lambda v: (get_vid_data(v), gloss), get_all_vid(gloss_dir, gloss)))
 
 
-def _get_all_gdata(gloss_dir: str):
-    gdata: List[GData] = [_get_gdata(gloss_dir, gloss)
-                          for gloss in get_all_gloss(gloss_dir)]
-    return gdata
+def _get_all_gdata(gloss_dir: str) -> List[GData]:
+    return [_get_gdata(gloss_dir, gloss)
+            for gloss in get_all_gloss(gloss_dir)]
