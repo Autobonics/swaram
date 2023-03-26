@@ -136,9 +136,12 @@ class GlossProcess():
                 raise StopIteration()
 
     def __repr__(self):
-        return f"""Glosses     : {self.glosses}\n 
-                   frame count : {self.frame_count}\n 
+        return f"""Glosses     : {self.glosses}\n
+                   frame count : {self.frame_count}\n
                    video count : {self.vid_count}"""
+
+    def __len__(self):
+        return len(self.glosses)*self.vid_count
 
     def gen_seq(self, gloss: str, vid_num: Union[None, int] = None) -> List[np.ndarray]:
         # if not self.frame_count:
@@ -216,13 +219,14 @@ class GlossProcess():
         })
         df.to_csv('dataset.csv', index=False)
 
+    def _transform_gdata(self, x: str) -> np.ndarray:
+        return np.fromstring(re.sub(r'[\[\]\s+]', "", x), dtype=float, sep=',').reshape((self.frame_count, 1596))
+
     def load_dataset(self) -> GData:
         df = pd.read_csv('dataset.csv')
         label: List[str] = df['Label'].tolist()
         gd: np.ndarray = df['GlossData'].to_numpy()
-        def df_func(d): return np.fromstring(
-            re.sub(r'[\[\]\s+]', "", d), dtype=float, sep=',').reshape((self.frame_count, 1596))
-        gdata: np.ndarray = np.asarray([df_func(x) for x in gd])
+        gdata: np.ndarray = np.asarray([self._transform_gdata(x) for x in gd])
         return gdata, label
 
     def save_checkpoint(self):
