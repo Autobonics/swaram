@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import os
 import torch
+import itertools
 from typing import List, Tuple
 from functools import reduce
 
@@ -12,7 +13,7 @@ mp_drawing_styles = mp.solutions.drawing_styles
 
 # Drawing from mediapipe holistic docs : )
 
-GData = List[Tuple[np.ndarray, str]]
+GData = Tuple[List[np.ndarray], List[str]]
 
 
 def draw_landmarks(image: np.ndarray, res):
@@ -81,9 +82,13 @@ def get_vid_data(vid_dir: str) -> np.ndarray:
 
 
 def _get_gdata(gloss_dir: str, gloss: str) -> GData:
-    return list(map(lambda v: (get_vid_data(v), gloss), get_all_vid(gloss_dir, gloss)))
+    gd = list(map(lambda v: get_vid_data(v), get_all_vid(gloss_dir, gloss)))
+    return (gd, list(itertools.repeat(gloss, len(gd))))
 
 
-def _get_all_gdata(gloss_dir: str) -> List[GData]:
-    return [_get_gdata(gloss_dir, gloss)
-            for gloss in get_all_gloss(gloss_dir)]
+def _get_all_gdata(gloss_dir: str) -> GData:
+    acc: GData = ([], [])
+    for gloss in get_all_gloss(gloss_dir):
+        data, label = _get_gdata(gloss_dir, gloss)
+        acc = (acc[0]+data, acc[1]+label)
+    return acc

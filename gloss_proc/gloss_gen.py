@@ -201,7 +201,7 @@ class GlossProcess():
     def get_gdata(self, gloss: str) -> GData:
         return _get_gdata(self.gloss_dir, gloss)
 
-    def get_all_gdata(self) -> List[GData]:
+    def get_all_gdata(self) -> GData:
         return _get_all_gdata(self.gloss_dir)
 
     def generate(self) -> List[str]:
