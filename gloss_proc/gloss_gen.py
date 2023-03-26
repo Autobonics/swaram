@@ -1,6 +1,6 @@
 import cv2
 import os
-import string
+import re
 import numpy as np
 import pandas as pd
 import mediapipe as mp
@@ -108,7 +108,7 @@ class GlossProcess():
         if len(glosses) == 0 and len(glosses[0]) == 0:
             raise AttributeError("Invalid glosses")
         self.glosses = self._sanitize(glosses)
-        # frame count default value : 72 @ 24fps ie 3 sec vid length
+        # frame count default value : 48 @ 24fps ie 2 sec vid length
         self.frame_count = frame_count
         # total video count for each gloss  :  10
         self.vid_count = vid_count
@@ -206,6 +206,24 @@ class GlossProcess():
 
     def generate(self) -> List[str]:
         return [res for res in self]
+
+    def save_dataset(self):
+        gdata, label = self.get_all_gdata()
+        df = pd.DataFrame({
+            "GlossData": gdata.reshape(
+                (len(label), self.frame_count*1596)).tolist(),
+            "Label": label
+        })
+        df.to_csv('dataset.csv', index=False)
+
+    def load_dataset(self) -> GData:
+        df = pd.read_csv('dataset.csv')
+        label: List[str] = df['Label'].tolist()
+        gd: np.ndarray = df['GlossData'].to_numpy()
+        def df_func(d): return np.fromstring(
+            re.sub(r'[\[\]\s+]', "", d), dtype=float, sep=',').reshape((self.frame_count, 1596))
+        gdata: np.ndarray = np.asarray([df_func(x) for x in gd])
+        return gdata, label
 
     def save_checkpoint(self):
         ckpt = json.dumps(self.__dict__)
