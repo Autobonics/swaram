@@ -13,7 +13,7 @@ mp_drawing_styles = mp.solutions.drawing_styles
 
 # Drawing from mediapipe holistic docs : )
 
-GData = Tuple[List[np.ndarray], List[str]]
+GData = Tuple[np.ndarray, List[str]]
 
 
 def draw_landmarks(image: np.ndarray, res):
@@ -82,13 +82,14 @@ def get_vid_data(vid_dir: str) -> np.ndarray:
 
 
 def _get_gdata(gloss_dir: str, gloss: str) -> GData:
-    gd = list(map(lambda v: get_vid_data(v), get_all_vid(gloss_dir, gloss)))
-    return (gd, list(itertools.repeat(gloss, len(gd))))
+    gd: np.ndarray = np.asarray([get_vid_data(vid)
+                                for vid in get_all_vid(gloss_dir, gloss)])
+    return (gd, list(itertools.repeat(gloss, gd.shape[0])))
 
 
 def _get_all_gdata(gloss_dir: str) -> GData:
-    acc: GData = ([], [])
+    acc: GData = (np.empty((0, 48, 1596)), [])
     for gloss in get_all_gloss(gloss_dir):
         data, label = _get_gdata(gloss_dir, gloss)
-        acc = (acc[0]+data, acc[1]+label)
+        acc = (np.append(acc[0], data, axis=0), acc[1]+label)
     return acc
