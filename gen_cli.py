@@ -18,16 +18,22 @@ def main():
         "-r", "--require", help="Generate gloss from gloss.txt", action="store_true"
     )
     parser.add_argument(
+        "-a", "--append", help="Append GlossProc Data if it exists", action="store_true"
+    )
+    parser.add_argument(
+        "-s", "--skip", help="Skip GlossProc Data if already exists", action="store_true"
+    )
+    parser.add_argument(
         "-c", "--count", help="Add number of gloss [count from 0 or index specified by -i flag ] ie  get glosses[i:n](where i=0 by default) from gloss.txt", type=int
     )
     parser.add_argument(
         "-i", "--index", help="select i th gloss from gloss.txt", type=int
     )
     parser.add_argument(
-        "-v", "--vid", help="Add number of videos for each class [default:10]", type=int
+        "-v", "--vid", help="Add number of videos for each class [default:20]", type=int
     )
     parser.add_argument(
-        "-f", "--frame", help="Add number of frames in sequence of each class [default:48]", type=int
+        "-f", "--frame", help="Add number of frames in sequence of each class [default:30]", type=int
     )
     vid_count = parser.parse_args().vid if parser.parse_args().vid else 10
     frame_count = parser.parse_args().frame if parser.parse_args().frame else 48
@@ -39,8 +45,10 @@ def main():
             parser.print_help()
             exit()
         try:
+            append_flag = True if parser.parse_args().append else False
+            skip_flag = True if parser.parse_args().skip else False
             gp = GlossProcess([gloss], vid_count=vid_count,
-                              frame_count=frame_count)
+                              frame_count=frame_count, append=append_flag, skip=skip_flag)
             res = gp.generate()
             gp.save_checkpoint()
         except Exception as err:
@@ -55,8 +63,10 @@ def main():
                 parser.parse_args().index) if parser.parse_args().index else 0
             if init_index > gloss_len:
                 raise IndexError("Index Greater than total number of gloss")
+            append_flag = True if parser.parse_args().append else False
+            skip_flag = True if parser.parse_args().skip else False
             gp = GlossProcess(glosses[init_index:gloss_len], vid_count=vid_count,
-                              frame_count=frame_count)
+                              frame_count=frame_count, append=append_flag, skip=skip_flag)
             gp.generate()
             gp.save_checkpoint()
         except Exception as err:

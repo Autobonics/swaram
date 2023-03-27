@@ -99,8 +99,8 @@ class GlossProcess():
 
     def __init__(self,
                  glosses: List[str] = [],
-                 frame_count: int = 48,
-                 vid_count: int = 10,
+                 frame_count: int = 24,
+                 vid_count: int = 20,
                  gloss_dir: str = "gloss_data",
                  append: bool = False,
                  skip: bool = False):
@@ -109,9 +109,9 @@ class GlossProcess():
         if len(glosses) == 0 and len(glosses[0]) == 0:
             raise AttributeError("Invalid glosses")
         self.glosses = self._sanitize(glosses)
-        # frame count default value : 48 @ 24fps ie 2 sec vid length
+        # frame count default value : 24 @ 24fps ie 1 sec vid length
         self.frame_count = frame_count
-        # total video count for each gloss  :  10
+        # total video count for each gloss  :  20
         self.vid_count = vid_count
         # directory to store gloss_data
         self.gloss_dir = gloss_dir
