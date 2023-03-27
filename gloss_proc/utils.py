@@ -74,7 +74,10 @@ def get_all_vid(gloss_dir: str, gloss: str) -> List[str]:
 
 
 def gdata_count(gloss_dir: str, gloss: str) -> int:
-    return len(get_all_vid(gloss_dir, gloss))
+    try:
+        return len(get_all_vid(gloss_dir, gloss))
+    except:
+        return 0
 
 
 def get_vid_data(vid_dir: str) -> np.ndarray:
@@ -87,8 +90,8 @@ def _get_gdata(gloss_dir: str, gloss: str) -> GData:
     return (gd, list(itertools.repeat(gloss, gd.shape[0])))
 
 
-def _get_all_gdata(gloss_dir: str) -> GData:
-    acc: GData = (np.empty((0, 48, 1596)), [])
+def _get_all_gdata(seq_size: int, gloss_dir: str) -> GData:
+    acc: GData = (np.empty((0, seq_size, 1596)), [])
     for gloss in get_all_gloss(gloss_dir):
         data, label = _get_gdata(gloss_dir, gloss)
         acc = (np.append(acc[0], data, axis=0), acc[1]+label)

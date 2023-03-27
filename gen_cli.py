@@ -35,8 +35,8 @@ def main():
     parser.add_argument(
         "-f", "--frame", help="Add number of frames in sequence of each class [default:30]", type=int
     )
-    vid_count = parser.parse_args().vid if parser.parse_args().vid else 10
-    frame_count = parser.parse_args().frame if parser.parse_args().frame else 48
+    vid_count = parser.parse_args().vid if parser.parse_args().vid else 20
+    frame_count = parser.parse_args().frame if parser.parse_args().frame else 24
     if not parser.parse_args().require:
         if parser.parse_args().gloss:
             gloss = parser.parse_args().gloss
