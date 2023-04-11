@@ -57,8 +57,8 @@ def main():
         try:
             with open('gloss.txt', 'r') as file:
                 glosses = file.readlines()
-            gloss_len = abs(
-                parser.parse_args().count) if parser.parse_args().count else len(glosses)
+            gloss_len = abs(parser.parse_args().count) if parser.parse_args(
+            ).count else len(glosses)
             init_index = abs(
                 parser.parse_args().index) if parser.parse_args().index else 0
             if init_index > gloss_len:

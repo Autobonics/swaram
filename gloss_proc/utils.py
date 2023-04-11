@@ -16,7 +16,7 @@ mp_drawing_styles = mp.solutions.drawing_styles
 GData = Tuple[np.ndarray, List[str]]
 
 
-def draw_landmarks(image: np.ndarray, res):
+def draw_landmarks(image: np.ndarray, res) -> np.ndarray:
     mp_drawing.draw_landmarks(
         image,
         res.face_landmarks,
@@ -42,6 +42,7 @@ def draw_landmarks(image: np.ndarray, res):
         mp_holistic.HAND_CONNECTIONS,
         landmark_drawing_spec=mp_drawing_styles
         .get_default_hand_landmarks_style())
+    return image
 
 
 def set_gloss_path(gloss: str, gloss_dir: str) -> str:
@@ -96,3 +97,5 @@ def _get_all_gdata(seq_size: int, gloss_dir: str) -> GData:
         data, label = _get_gdata(gloss_dir, gloss)
         acc = (np.append(acc[0], data, axis=0), acc[1]+label)
     return acc
+
+
