@@ -1,10 +1,11 @@
 import cv2
 import pickle
 import tkinter
+import torch
+import pyttsx3
 import numpy as np
 import pandas as pd
 import mediapipe as mp
-import torch
 from PIL import Image, ImageTk
 from typing import Tuple, Union, List
 from gloss_proc import proc_landmarks, Landmarks, GlossProcess
@@ -52,6 +53,8 @@ class VidProcess:
 class SwaramApp:
     def __init__(self, window, title, max_seq_len: int = 24, model: str = "swaram_lstm.pt"):
         self.window = window
+        self.tts = pyttsx3.init()
+        self.tts.setProperty('rate', 125)
         self.vid_proc = VidProcess()
         self.window.title(title)
         self.max_seq_len = max_seq_len
@@ -88,6 +91,9 @@ class SwaramApp:
                     out = self.model(proc_seq)
                 res_class = torch.argmax(torch.max(out, dim=0).values)
                 self.res_text += self.classes[res_class.item()]+".\n"
+                self.tts.say(self.classes[res_class.item()])
+                self.tts.runAndWait()
+                self.tts.stop()
                 self.text_box.delete("1.0", tkinter.END)
                 self.text_box.insert("1.0", chars=self.res_text)
                 self.seq = []
