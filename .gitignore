@@ -4,6 +4,5 @@ __pycache__
 img_backup
 img_data
 gloss_transformer
-gloss_data
 runs
 *.zipd
